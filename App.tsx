@@ -1,118 +1,120 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import { useState, useRef, useEffect } from "react"
+import { View, Text, Image, PermissionsAndroid  } from 'react-native';
+import WebView from 'react-native-webview';
+import { useCameraPermission, useCameraDevice, Camera } from "react-native-vision-camera"
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  SafeAreaView,
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+import html from './index.html';
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+export default function App() {
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+  const { hasPermission, requestPermission } = useCameraPermission()
+  const camera = useRef<Camera>(null)
+  const device = useCameraDevice('back')
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const [isCameraOn, setIsCameraOn] = useState(false)
+  const [image, setImage] = useState(null)
+
+
+  const requestCameraPermission = async () => {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.READ_EXTERNAL_STORAGE,
+      );
+      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
+        console.log('You can use the camera');
+      } else {
+        console.log('Camera permission denied');
+      }
+    } catch (err) {
+      console.warn(err);
+    }
+  };
+
+  useEffect(function() {
+  
+    //requestCameraPermission()
+    
+  },[])
+
+
+
+  function onMessage(event: any) {
+
+    const eventData = JSON.parse(event.nativeEvent.data);
+    
+    if(eventData.type === 'camera') {
+      handleCamera(eventData)
+    }
+    else if(eventData.type === 'camera-take-picture') {
+      handleCameraTakePicture(eventData)
+    }
+  }
+
+  function handleCamera(eventData: any) {
+    
+    if(hasPermission) {
+      console.log('has permission')
+      setIsCameraOn(!isCameraOn)
+
+    }
+    else {
+      console.log('request permission')
+      requestPermission().then((permission) => {
+        console.log('permission', permission)
+        if(permission === true) {
+          console.log('permission granted')
+          setIsCameraOn(!isCameraOn)
+        }
+      }
+      )
+      
+    }
+  }
+  
+  async function handleCameraTakePicture(eventData: any) {
+    try
+    {
+      console.log('take picture')
+      const picture = await camera.current?.takePhoto()
+     
+      new FileReader
+
+      setImage(picture.path)
+
+
+      const r = await fetch(picture.path);
+      const blob = await r.blob();
+
+      const reader = new FileReader();
+      reader.readAsDataURL(blob);
+      reader.onloadend = function() {
+        const base64data = reader.result;
+        console.log(base64data);
+      }
+
+
+
+      console.log('picture', picture)
+
+    }
+    catch(err)
+    {
+      console.log('error', err)
+    }
+  }
+console.log(image)
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
+    <View style={{ flex:1 }}>
+      <Text>Hello World</Text>
+      <WebView source={ { uri:"http://localhost:5500/index.html" }} onMessage={onMessage}/>
+      <Camera
+        ref={camera}
+        photo={true}
+        device={device}
+        isActive={isCameraOn}
+        style={{ height:200, width:100, position:"absolute", top:60, left:0 }}
+      />
+      <Image source={{ uri:"file://"+image }} style={{ height:100, width:100, borderColor:"black", borderWidth:3 }}/>
     </View>
   );
 }
-
-function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
-
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
-
-  return (
-    <SafeAreaView style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        contentInsetAdjustmentBehavior="automatic"
-        style={backgroundStyle}>
-        <Header />
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </SafeAreaView>
-  );
-}
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
-
-export default App;

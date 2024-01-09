@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <button id="camera">Camera</button>
+  <button id="click">click</button>
+  <img id="image" src="" alt="">
+  <video autoplay="true" id="videoElement">
+	
+	</video>
+</body>
+<script>
+
+  const camera = document.getElementById('camera');
+
+  camera.addEventListener("click", function()
+  {
+    
+    window.ReactNativeWebView.postMessage(JSON.stringify({type: "camera"}));
+  })
+
+  const click = document.getElementById('click');
+
+  click.addEventListener("click", function()
+  {
+    
+    window.ReactNativeWebView.postMessage(JSON.stringify({type: "camera-take-picture"}));
+  })
+
+
+  const video = document.getElementById("videoElement");
+
+if (window.navigator.mediaDevices.getUserMedia) {
+  
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then(function (stream) {
+      console.log(stream);
+      video.srcObject = stream;
+    })
+    .catch(function (err0r) {
+      console.log("Something went wrong!");
+    });
+}
+</script>
+</html>
